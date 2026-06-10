@@ -111,6 +111,12 @@ ruff check . && mypy src/dexscope && pytest --cov=dexscope
 
 All tests run offline (fixtures + a fake HTTP client) — CI never calls the live providers.
 
+## Star history
+
+If this saved you a paid chart subscription, a ⭐ helps others find it.
+
+[![Star History Chart](https://api.star-history.com/svg?repos=baronguyen001/dex-chart-dashboard&type=Date)](https://www.star-history.com/#baronguyen001/dex-chart-dashboard&Date)
+
 ## License
 
 MIT © 2026 [baronguyen001](https://github.com/baronguyen001)
