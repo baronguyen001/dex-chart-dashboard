@@ -1,0 +1,18 @@
+# Changelog
+
+All notable changes to this project are documented here. Format loosely follows
+[Keep a Changelog](https://keepachangelog.com/); versions follow SemVer.
+
+## [0.1.0] - 2026-06-10
+
+Initial release.
+
+### Added
+- `dexscope serve` — self-hosted Flask dashboard: watchlist table + per-token candlestick chart.
+- Multi-timeframe charts (1m/5m/15m/30m/1h/2h/4h/1d) from **GeckoTerminal** OHLCV.
+- **30m & 2h resampled locally** from 15m / 1h (GeckoTerminal serves neither natively).
+- Process-wide request throttle + HTTP 429 backoff + 15-minute on-disk OHLC cache to stay under free-tier limits.
+- **DexScreener** integration: best-liquidity pool resolution + batched live price/liquidity.
+- Watchlist as plain JSON (`{chain, address, label?, note?, entry?, sl?, tp1?, tp2?}`); entry/SL/TP draw as level lines.
+- CLI: `serve`, `warm`, `resolve`, `add`.
+- No API keys required (both providers are keyless).

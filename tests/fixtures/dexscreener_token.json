@@ -1,0 +1,26 @@
+[
+  {
+    "chainId": "solana",
+    "pairAddress": "ExamplePool1111111111111111111111111111111",
+    "url": "https://dexscreener.com/solana/examplepool",
+    "priceUsd": "1.30",
+    "baseToken": {
+      "address": "EXAMPLEtokenAddress1111111111111111111111111",
+      "symbol": "EXMPL",
+      "name": "Example Token"
+    },
+    "liquidity": { "usd": 250000.0 }
+  },
+  {
+    "chainId": "solana",
+    "pairAddress": "ExamplePool2222222222222222222222222222222",
+    "url": "https://dexscreener.com/solana/examplepool2",
+    "priceUsd": "1.29",
+    "baseToken": {
+      "address": "EXAMPLEtokenAddress1111111111111111111111111",
+      "symbol": "EXMPL",
+      "name": "Example Token"
+    },
+    "liquidity": { "usd": 90000.0 }
+  }
+]

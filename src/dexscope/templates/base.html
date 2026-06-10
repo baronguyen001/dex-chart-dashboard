@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}dexscope — DEX chart dashboard{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" defer></script>
+  <script src="{{ url_for('static', filename='app.js') }}" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark">DX</div>
+      <div>
+        <h1>dexscope</h1>
+        <p>Self-hosted DEX token charts — multi-timeframe, no API keys</p>
+      </div>
+    </div>
+    <nav class="nav">
+      <a href="{{ url_for('index') }}" class="{{ 'active' if request.path == '/' else '' }}">Watchlist</a>
+      <a href="https://github.com/baronguyen001/dex-chart-dashboard" target="_blank" rel="noreferrer">GitHub</a>
+    </nav>
+  </header>
+
+  <main class="page">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="footer">
+    Data from GeckoTerminal (OHLCV) + DexScreener (live price) — both keyless. Local only.
+  </footer>
+</body>
+</html>

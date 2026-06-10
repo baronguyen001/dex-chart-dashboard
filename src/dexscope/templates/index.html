@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block title %}Watchlist — dexscope{% endblock %}
+
+{% block content %}
+<section class="section-head">
+  <div>
+    <h2>Watchlist</h2>
+    <p class="muted">
+      {{ items|length }} tokens · source <code>{{ watchlist_path }}</code>
+    </p>
+  </div>
+  <div class="head-actions">
+    <button id="refresh-prices" class="btn primary" type="button">
+      <span>Refresh prices</span>
+    </button>
+    <button id="export-watchlist" class="btn" type="button" data-table="token-table">
+      <span>CSV</span>
+    </button>
+  </div>
+</section>
+
+<section class="panel table-panel">
+  <div class="panel-head table-head">
+    <h3>Tokens</h3>
+    <div class="filters">
+      <input id="token-search" type="search" placeholder="Search symbol, address, note">
+      <select id="chain-filter" aria-label="Chain filter">
+        <option value="">All chains</option>
+        {% for c in items|map(attribute='chain')|unique|sort %}
+        <option value="{{ c }}">{{ c }}</option>
+        {% endfor %}
+      </select>
+      <span id="token-count" class="count"></span>
+    </div>
+  </div>
+
+  {% if not items %}
+  <div class="empty-state">
+    Your watchlist is empty. Add a token:
+    <code>dexscope add sol &lt;token-address&gt; --label MYTOKEN</code>
+    then reload.
+  </div>
+  {% endif %}
+
+  <div class="table-wrap">
+    <table id="token-table" class="data-table">
+      <thead>
+        <tr>
+          <th class="sortable" data-type="text">Token</th>
+          <th class="sortable" data-type="text">Chain</th>
+          <th class="sortable num" data-type="number">Price</th>
+          <th class="sortable num" data-type="number">Liquidity</th>
+          <th class="num">Levels</th>
+          <th>Note</th>
+          <th>Links</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in items %}
+        <tr class="data-row"
+            data-chain="{{ item.chain }}"
+            data-text="{{ (item.symbol ~ ' ' ~ item.label ~ ' ' ~ item.address ~ ' ' ~ item.note)|lower }}">
+          <td data-value="{{ item.symbol }}">
+            <div class="token-cell">
+              <a class="token-link" href="{{ url_for('token_detail', chain=item.chain, address=item.address) }}">
+                <strong>{{ item.symbol }}</strong>
+              </a>
+              {% if item.label and item.label != item.symbol %}<span>{{ item.label }}</span>{% endif %}
+              <code>{{ item.address|addr }}</code>
+            </div>
+          </td>
+          <td data-value="{{ item.chain }}"><span class="chain chain-{{ item.chain }}">{{ item.chain }}</span></td>
+          <td class="num" data-value="{{ item.price or 0 }}">{{ item.price|price }}</td>
+          <td class="num" data-value="{{ item.liq or 0 }}">{{ item.liq|money }}</td>
+          <td class="num">
+            <div class="levels">
+              {% if item.entry is not none %}<span class="lvl lvl-entry">E {{ item.entry|price }}</span>{% endif %}
+              {% if item.sl is not none %}<span class="lvl lvl-sl">SL {{ item.sl|price }}</span>{% endif %}
+              {% if item.tp1 is not none %}<span class="lvl lvl-tp">TP1 {{ item.tp1|price }}</span>{% endif %}
+              {% if item.tp2 is not none %}<span class="lvl lvl-tp">TP2 {{ item.tp2|price }}</span>{% endif %}
+              {% if item.entry is none and item.sl is none and item.tp1 is none and item.tp2 is none %}
+              <span class="muted">—</span>
+              {% endif %}
+            </div>
+          </td>
+          <td class="note">{{ item.note or '' }}</td>
+          <td>
+            <div class="link-list">
+              <a href="{{ url_for('token_detail', chain=item.chain, address=item.address) }}">Chart</a>
+              {% if item.url %}<a href="{{ item.url }}" target="_blank" rel="noreferrer">Dex</a>{% endif %}
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

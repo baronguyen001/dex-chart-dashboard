@@ -1,0 +1,28 @@
+# env / virtualenvs
+.env
+.venv/
+venv/
+
+# python build / caches
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+build/
+dist/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# runtime data (your personal watchlist + caches stay local)
+watchlist.json
+data/ohlc_cache/
+data/live_prices_cache.json
+data/*.local.json
+
+# editors / OS
+.idea/
+.vscode/
+.DS_Store

@@ -1,0 +1,24 @@
+[
+  {
+    "chain": "sol",
+    "address": "EKpQGSJtjMFqKZ9KQanSqYXRcF8fBopzLHYxdM65zcjm",
+    "label": "WIF",
+    "note": "Public well-known token, used here only as a chartable example."
+  },
+  {
+    "chain": "sol",
+    "address": "DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263",
+    "label": "BONK",
+    "entry": 0.000022,
+    "sl": 0.000018,
+    "tp1": 0.000030,
+    "tp2": 0.000045,
+    "note": "Example entry/SL/TP levels render as horizontal lines on the chart."
+  },
+  {
+    "chain": "eth",
+    "address": "0x6982508145454Ce325dDbE47a25d4ec3d2311933",
+    "label": "PEPE",
+    "note": "Public ERC-20 example."
+  }
+]

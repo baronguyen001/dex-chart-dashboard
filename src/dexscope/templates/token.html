@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}{{ item.symbol }} — dexscope{% endblock %}
+
+{% block content %}
+<section class="section-head">
+  <div>
+    <h2>{{ item.symbol }} {% if item.label and item.label != item.symbol %}<span class="muted">{{ item.label }}</span>{% endif %}</h2>
+    <p class="muted">
+      <span class="chain chain-{{ item.chain }}">{{ item.chain }}</span>
+      | <code>{{ item.address }}</code>
+      {% if item.pool %} | pool <code>{{ item.pool|addr }}</code>{% endif %}
+    </p>
+  </div>
+  <div class="head-actions">
+    <a class="btn" href="{{ url_for('index') }}"><span>← Watchlist</span></a>
+    {% if item.url %}
+    <a class="btn primary" href="{{ item.url }}" target="_blank" rel="noreferrer"><span>Open on DexScreener</span></a>
+    {% endif %}
+  </div>
+</section>
+
+<section class="metrics-grid token-metrics">
+  <article class="metric"><span>Price</span><strong>{{ item.price|price }}</strong><small>live (DexScreener)</small></article>
+  <article class="metric"><span>Entry</span><strong>{{ item.entry|price }}</strong><small>your level</small></article>
+  <article class="metric"><span>SL</span><strong>{{ item.sl|price }}</strong><small>your level</small></article>
+  <article class="metric"><span>TP1 / TP2</span><strong>{{ item.tp1|price }} / {{ item.tp2|price }}</strong><small>your levels</small></article>
+</section>
+
+<section class="panel">
+  <div class="panel-head">
+    <h3>Price chart</h3>
+    <span class="muted" id="tf-status">{{ chart.timeframe }} candles</span>
+  </div>
+  {% if chart.timeframe_summary %}
+  <div class="tf-switch" id="tf-switch" role="tablist" aria-label="Chart timeframe">
+    {% for tf in chart.timeframe_summary %}
+    <button type="button" class="tf-btn{% if tf.timeframe == chart.selected_timeframe %} active{% endif %}"
+            data-timeframe="{{ tf.timeframe }}"{% if not tf.available %} disabled{% endif %}
+            title="{{ tf.count }} candles">{{ tf.timeframe }}</button>
+    {% endfor %}
+  </div>
+  {% endif %}
+  {% if chart.has_chart %}
+  <div class="chart-box token-chart-box">
+    <canvas id="token-chart" aria-label="Token price chart"></canvas>
+  </div>
+  {% else %}
+  <div class="empty-state" id="token-chart-empty">
+    GeckoTerminal has no OHLCV for this pool yet (common for very fresh pools). Try again later, or run
+    <code>dexscope warm</code> after the pool has traded for a while.
+  </div>
+  {% endif %}
+  {% set maxc = (chart.timeframe_summary|map(attribute='count')|max) if chart.timeframe_summary else 0 %}
+  <p class="chart-source-note muted">
+    Candles from <strong>GeckoTerminal</strong> (free){% if maxc and maxc < 30 %} — this pool is only indexed with
+    <strong>{{ maxc }}</strong> candles so far (fresh Base/SOL pools are often thin on Gecko){% endif %}.
+    30m and 2h are resampled locally from 15m / 1h. Switch timeframes above.
+  </p>
+</section>
+
+<script id="token-chart-data" type="application/json">
+{{ chart|tojson }}
+</script>
+{% endblock %}
