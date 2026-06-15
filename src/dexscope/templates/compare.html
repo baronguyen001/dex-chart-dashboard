@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Compare - dexscope{% endblock %}
+
+{% block content %}
+<section class="section-head">
+  <div>
+    <h2>Compare</h2>
+    <p class="muted">
+      Normalized percent change for watchlist tokens over <strong>{{ timeframe }}</strong>.
+    </p>
+  </div>
+  <div class="head-actions">
+    <a class="btn" href="{{ url_for('index') }}"><span>Watchlist</span></a>
+  </div>
+</section>
+
+<section class="panel">
+  <div class="panel-head">
+    <h3>Relative performance</h3>
+    <span class="muted">{{ rows|length }} tokens</span>
+  </div>
+  <div class="tf-switch" role="tablist" aria-label="Compare timeframe">
+    {% for tf in timeframes %}
+    <a class="tf-link{% if tf == timeframe %} active{% endif %}"
+       href="{{ url_for('compare', timeframe=tf) }}">{{ tf }}</a>
+    {% endfor %}
+  </div>
+
+  {% if not rows %}
+  <div class="empty-state">
+    Your watchlist is empty. Add a token:
+    <code>dexscope add sol &lt;token-address&gt; --label MYTOKEN</code>
+    then reload.
+  </div>
+  {% endif %}
+
+  <div class="compare-grid">
+    {% for row in rows %}
+    <article class="compare-card">
+      <div class="compare-card-head">
+        <div>
+          <h4>{{ row.label }}</h4>
+          <p><span class="chain chain-{{ row.chain }}">{{ row.chain }}</span> <code>{{ row.address|addr }}</code></p>
+        </div>
+        <span class="muted">{{ row.count }} candles</span>
+      </div>
+      {% if row.points %}
+      <div class="mini-chart-box">
+        <canvas class="compare-chart" data-index="{{ loop.index0 }}" aria-label="{{ row.label }} compare chart"></canvas>
+      </div>
+      {% else %}
+      <div class="empty-state mini-empty">No OHLCV yet</div>
+      {% endif %}
+    </article>
+    {% endfor %}
+  </div>
+</section>
+
+<script id="compare-chart-data" type="application/json">
+{{ rows|tojson }}
+</script>
+{% endblock %}

@@ -40,6 +40,12 @@
     {% endfor %}
   </div>
   {% endif %}
+  <div class="overlay-controls" aria-label="Optional indicator overlays">
+    {% for period in chart.indicator_options.ema_periods %}
+    <label><input type="checkbox" data-overlay="ema" data-period="{{ period }}"> EMA {{ period }}</label>
+    {% endfor %}
+    <label><input type="checkbox" data-overlay="rsi" data-period="{{ chart.indicator_options.rsi_period }}"> RSI {{ chart.indicator_options.rsi_period }}</label>
+  </div>
   {% if chart.has_chart %}
   <div class="chart-box token-chart-box">
     <canvas id="token-chart" aria-label="Token price chart"></canvas>
@@ -55,6 +61,7 @@
     Candles from <strong>GeckoTerminal</strong> (free){% if maxc and maxc < 30 %} — this pool is only indexed with
     <strong>{{ maxc }}</strong> candles so far (fresh Base/SOL pools are often thin on Gecko){% endif %}.
     30m and 2h are resampled locally from 15m / 1h. Switch timeframes above.
+    EMA and RSI overlays are optional read-only calculations on public candles, not financial advice.
   </p>
 </section>
 

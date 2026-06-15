@@ -196,10 +196,63 @@ code {
 .tf-btn:hover:not(:disabled) { color: var(--text); border-color: var(--accent); }
 .tf-btn.active { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600; }
 .tf-btn:disabled { opacity: 0.35; cursor: default; }
+.tf-link {
+  color: var(--muted);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  padding: 5px 11px;
+  border-radius: 7px;
+  font-size: 0.8rem;
+  text-decoration: none;
+}
+.tf-link:hover { color: var(--text); border-color: var(--accent); }
+.tf-link.active { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600; }
+
+.overlay-controls {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.overlay-controls label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 5px 10px;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+.overlay-controls label:hover { color: var(--text); border-color: var(--accent); }
 
 .chart-box { position: relative; height: 420px; }
 .token-chart-box { height: 480px; }
 .chart-source-note { margin: 12px 0 0; font-size: 0.8rem; }
+
+.compare-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 12px;
+}
+.compare-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  padding: 14px;
+}
+.compare-card-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.compare-card h4 { margin: 0 0 4px; font-size: 0.95rem; }
+.compare-card p { margin: 0; font-size: 0.78rem; color: var(--muted); }
+.mini-chart-box { position: relative; height: 145px; }
+.mini-empty { padding: 52px 10px; }
 
 .footer {
   text-align: center;

@@ -66,10 +66,42 @@ def test_token_route_renders_chart(tmp_path, monkeypatch):
 
     settings = _settings(tmp_path, [{"chain": "sol", "address": "ADDR1", "label": "EXMPL"}])
     client = create_app(settings).test_client()
-    resp = client.get("/token/sol/ADDR1")
+    resp = client.get("/token/sol/ADDR1?ema=3&rsi=3")
     assert resp.status_code == 200
     assert b"token-chart" in resp.data
     assert b"token-chart-data" in resp.data
+    assert b"EMA 3" in resp.data
+    assert b"RSI 3" in resp.data
+
+
+def test_compare_route_renders_watchlist_labels(tmp_path, monkeypatch):
+    from dexscope.dexscreener import DexScreenerClient
+    from dexscope.gecko import GeckoClient
+
+    monkeypatch.setattr(
+        DexScreenerClient,
+        "resolve_pool",
+        lambda self, c, a: {"pool": f"POOL-{a}", "symbol": f"SYM-{a}"},
+    )
+    candles = [
+        {"ts": i * 3600, "open": 1.0, "high": 2.0, "low": 0.5, "close": 1.0 + i, "volume": 100.0}
+        for i in range(4)
+    ]
+    monkeypatch.setattr(GeckoClient, "fetch", lambda self, c, p, timeframe="1h": candles)
+
+    settings = _settings(
+        tmp_path,
+        [
+            {"chain": "sol", "address": "ADDR1", "label": "ALPHA"},
+            {"chain": "base", "address": "ADDR2", "label": "BETA"},
+        ],
+    )
+    client = create_app(settings).test_client()
+    resp = client.get("/compare?timeframe=1h")
+    assert resp.status_code == 200
+    assert b"ALPHA" in resp.data
+    assert b"BETA" in resp.data
+    assert b"compare-chart-data" in resp.data
 
 
 def test_token_route_404_when_no_pool(tmp_path, monkeypatch):

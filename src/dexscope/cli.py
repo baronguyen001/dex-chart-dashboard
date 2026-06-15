@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import sys
+from pathlib import Path
 
 from . import __version__
 from .chains import GECKO_CHAINS, norm_chain
@@ -42,6 +43,14 @@ def _build_parser() -> argparse.ArgumentParser:
     p_add.add_argument("--sl", type=float, default=None)
     p_add.add_argument("--tp1", type=float, default=None)
     p_add.add_argument("--tp2", type=float, default=None)
+
+    p_snapshot = sub.add_parser("snapshot", help="export a token candlestick chart to PNG")
+    p_snapshot.add_argument("chain")
+    p_snapshot.add_argument("address")
+    p_snapshot.add_argument("--timeframe", default="1h", choices=CHART_TIMEFRAMES)
+    p_snapshot.add_argument("--out", default="chart.png")
+    p_snapshot.add_argument("--ema", type=int, action="append", default=[], metavar="PERIOD")
+    p_snapshot.add_argument("--rsi", type=int, default=None, metavar="PERIOD")
     return parser
 
 
@@ -137,6 +146,43 @@ def _cmd_add(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_snapshot(args: argparse.Namespace) -> int:
+    from .snapshot import VIZ_EXTRA_MESSAGE, export_snapshot
+
+    settings = load_settings()
+    dex = DexScreenerClient(settings)
+    info = dex.resolve_pool(args.chain, args.address)
+    if not info.get("pool"):
+        print(f"No pool found for {norm_chain(args.chain)}:{args.address}", file=sys.stderr)
+        return 1
+
+    gecko = GeckoClient(settings, RateLimiter(settings.rate_min_interval))
+    candles = gecko.fetch(args.chain, info["pool"], args.timeframe)
+    if not candles:
+        print("No candles available for snapshot", file=sys.stderr)
+        return 1
+
+    try:
+        out = export_snapshot(
+            candles,
+            Path(args.out),
+            title=info.get("symbol") or args.address[:10],
+            timeframe=args.timeframe,
+            ema_periods=tuple(args.ema),
+            rsi_period=args.rsi,
+        )
+    except RuntimeError as exc:
+        if str(exc) == VIZ_EXTRA_MESSAGE:
+            print(str(exc), file=sys.stderr)
+            return 1
+        raise
+    except ValueError as exc:
+        print(str(exc), file=sys.stderr)
+        return 1
+    print(f"Wrote {out}")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     args = _build_parser().parse_args(argv)
     handlers = {
@@ -144,6 +190,7 @@ def main(argv: list[str] | None = None) -> int:
         "warm": _cmd_warm,
         "resolve": _cmd_resolve,
         "add": _cmd_add,
+        "snapshot": _cmd_snapshot,
     }
     return handlers[args.command](args)
 

@@ -1,4 +1,4 @@
-"""Build the chart payload the frontend renders (Chart.js candlesticks + level lines).
+"""Build the chart payload the frontend renders (candlesticks, levels, indicators).
 
 Kept deliberately generic: candles come from GeckoTerminal, and the only overlays are
 the user's own ``entry``/``sl``/``tp1``/``tp2`` price levels drawn as horizontal lines.
@@ -10,6 +10,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 
 from .gecko import GeckoClient
+from .indicators import build_indicators
 from .models import CHART_TIMEFRAMES
 from .util import to_float
 
@@ -55,7 +56,14 @@ def _labels(candles: list[dict]) -> list[str]:
     ]
 
 
-def build_chart_frame(candles: list[dict], levels: dict[str, float | None], timeframe: str) -> dict:
+def build_chart_frame(
+    candles: list[dict],
+    levels: dict[str, float | None],
+    timeframe: str,
+    *,
+    ema_periods: tuple[int, ...] = (9, 21),
+    rsi_period: int = 14,
+) -> dict:
     """One timeframe's worth of arrays for Chart.js, plus flat level lines."""
     labels = _labels(candles)
     has_chart = bool(candles)
@@ -74,6 +82,7 @@ def build_chart_frame(candles: list[dict], levels: dict[str, float | None], time
         "close": [row.get("close") for row in candles],
         "volume": [row.get("volume") for row in candles],
         "levels": {key: level_series(levels.get(key)) for key in LEVEL_KEYS},
+        "indicators": build_indicators(candles, ema_periods=ema_periods, rsi_period=rsi_period),
     }
 
 
@@ -89,10 +98,17 @@ def _empty_frame(timeframe: str) -> dict:
         "close": [],
         "volume": [],
         "levels": {key: [] for key in LEVEL_KEYS},
+        "indicators": {"ema": {}, "rsi": {}},
     }
 
 
-def build_chart_bundle(gecko: GeckoClient, item: dict) -> dict:
+def build_chart_bundle(
+    gecko: GeckoClient,
+    item: dict,
+    *,
+    ema_periods: tuple[int, ...] = (9, 21),
+    rsi_period: int = 14,
+) -> dict:
     """Fetch every timeframe for a watchlist item and pick a sensible default frame."""
     chain = item.get("chain") or ""
     pool = item.get("pool") or ""
@@ -102,7 +118,9 @@ def build_chart_bundle(gecko: GeckoClient, item: dict) -> dict:
     summary: list[dict] = []
     for tf in CHART_TIMEFRAMES:
         candles = gecko.fetch(chain, pool, tf) if pool else []
-        frame = build_chart_frame(candles, levels, tf)
+        frame = build_chart_frame(
+            candles, levels, tf, ema_periods=ema_periods, rsi_period=rsi_period
+        )
         if frame["has_chart"]:
             timeframes[tf] = frame
         summary.append(
@@ -123,4 +141,5 @@ def build_chart_bundle(gecko: GeckoClient, item: dict) -> dict:
     frame["available_timeframes"] = [s["timeframe"] for s in summary if s["available"]]
     frame["timeframes"] = timeframes
     frame["timeframe_summary"] = summary
+    frame["indicator_options"] = {"ema_periods": list(ema_periods), "rsi_period": rsi_period}
     return frame

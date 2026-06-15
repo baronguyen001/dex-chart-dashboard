@@ -140,7 +140,7 @@
 
   // Candlesticks without a plugin: a thin wick bar [low, high] behind a wider body bar
   // [min(o,c), max(o,c)], both centered on the candle (grouped:false so they overlay).
-  function buildDatasets(frame) {
+  function buildDatasets(frame, enabledOverlays) {
     const datasets = [];
     const opens = frame.open || [];
     const highs = frame.high || [];
@@ -225,6 +225,37 @@
     addLevel("SL", frame.levels?.sl, "#b42318");
     addLevel("TP1", frame.levels?.tp1, "#137333");
     addLevel("TP2", frame.levels?.tp2, "#0f766e");
+
+    const ema = frame.indicators?.ema || {};
+    Object.keys(ema).forEach((period, index) => {
+      if (!enabledOverlays?.has(`ema:${period}`)) return;
+      datasets.push({
+        label: `EMA ${period}`,
+        data: ema[period],
+        type: "line",
+        borderColor: index % 2 ? "#f59e0b" : "#38bdf8",
+        borderWidth: 1.6,
+        pointRadius: 0,
+        tension: 0.15,
+        order: 0,
+      });
+    });
+
+    const rsi = frame.indicators?.rsi || {};
+    Object.keys(rsi).forEach((period) => {
+      if (!enabledOverlays?.has(`rsi:${period}`)) return;
+      datasets.push({
+        label: `RSI ${period}`,
+        data: rsi[period],
+        type: "line",
+        yAxisID: "y2",
+        borderColor: "#c084fc",
+        borderWidth: 1.4,
+        pointRadius: 0,
+        tension: 0.15,
+        order: 4,
+      });
+    });
     return datasets;
   }
 
@@ -282,6 +313,13 @@
           },
         },
       },
+      y2: {
+        position: "right",
+        min: 0,
+        max: 100,
+        grid: { drawOnChartArea: false },
+        ticks: { callback: (value) => `${Number(value).toFixed(0)}` },
+      },
     },
   };
 
@@ -302,8 +340,18 @@
 
     let activeChart = null;
     const statusEl = byId("tf-status");
+    let currentFrame = token.selected_timeframe;
+
+    function enabledOverlays() {
+      const enabled = new Set();
+      document.querySelectorAll(".overlay-controls input:checked").forEach((input) => {
+        enabled.add(`${input.dataset.overlay}:${input.dataset.period}`);
+      });
+      return enabled;
+    }
 
     function renderFrame(label) {
+      currentFrame = label || currentFrame;
       const frame = frameFor(label);
       if (activeChart) {
         activeChart.destroy();
@@ -311,7 +359,7 @@
       }
       activeChart = new Chart(tokenEl, {
         type: "bar",
-        data: { labels: frame.labels || [], datasets: buildDatasets(frame) },
+        data: { labels: frame.labels || [], datasets: buildDatasets(frame, enabledOverlays()) },
         options: chartOptions,
       });
       if (statusEl) {
@@ -331,6 +379,58 @@
         renderFrame(label);
       });
     });
+
+    document.querySelectorAll(".overlay-controls input").forEach((input) => {
+      input.addEventListener("change", () => renderFrame(currentFrame));
+    });
+  }
+
+  function renderCompareCharts() {
+    if (!window.Chart) return;
+    const rows = parseJsonScript("compare-chart-data");
+    if (!rows) return;
+
+    document.querySelectorAll(".compare-chart").forEach((canvas) => {
+      const row = rows[Number(canvas.dataset.index)];
+      if (!row || !row.points || !row.points.length) return;
+      const last = row.points.filter((value) => value !== null && value !== undefined).slice(-1)[0] || 0;
+      const color = last >= 0 ? UP : DOWN;
+      new Chart(canvas, {
+        type: "line",
+        data: {
+          labels: row.labels || [],
+          datasets: [{
+            label: `${row.label} %`,
+            data: row.points,
+            borderColor: color,
+            backgroundColor: color === UP ? "rgba(22,163,74,0.12)" : "rgba(220,38,38,0.12)",
+            fill: true,
+            pointRadius: 0,
+            borderWidth: 1.8,
+            tension: 0.18,
+          }],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: (ctx) => `${ctx.parsed.y.toFixed(2)}%`,
+              },
+            },
+          },
+          scales: {
+            x: { display: false },
+            y: {
+              ticks: { callback: (value) => `${Number(value).toFixed(0)}%` },
+              grid: { color: "rgba(147,160,189,0.12)" },
+            },
+          },
+        },
+      });
+    });
   }
 
   document.addEventListener("DOMContentLoaded", () => {
@@ -339,5 +439,6 @@
     setupRefreshPrices();
     setupExport();
     renderTokenChart();
+    renderCompareCharts();
   });
 })();

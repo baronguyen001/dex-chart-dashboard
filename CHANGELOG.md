@@ -3,12 +3,19 @@
 All notable changes to this project are documented here. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/); versions follow SemVer.
 
+## [0.2.0] - 2026-06-15
+
+### Added
+- Added optional EMA and RSI overlays computed locally from fetched OHLCV candles.
+- Added `/compare` for normalized percent-change watchlist mini-sparklines.
+- Added `dexscope snapshot` PNG export behind the optional `[viz]` matplotlib extra.
+
 ## [0.1.0] - 2026-06-10
 
 Initial release.
 
 ### Added
-- `dexscope serve` — self-hosted Flask dashboard: watchlist table + per-token candlestick chart.
+- `dexscope serve` - self-hosted Flask dashboard: watchlist table + per-token candlestick chart.
 - Multi-timeframe charts (1m/5m/15m/30m/1h/2h/4h/1d) from **GeckoTerminal** OHLCV.
 - **30m & 2h resampled locally** from 15m / 1h (GeckoTerminal serves neither natively).
 - Process-wide request throttle + HTTP 429 backoff + 15-minute on-disk OHLC cache to stay under free-tier limits.

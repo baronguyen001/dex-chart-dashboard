@@ -13,6 +13,7 @@ import argparse
 from dexscope.config import load_settings
 from dexscope.dexscreener import DexScreenerClient
 from dexscope.gecko import GeckoClient, resample_candles
+from dexscope.indicators import ema_values
 from dexscope.ratelimit import RateLimiter
 
 # A tiny built-in 1h OHLCV sample (ts, open, high, low, close, volume) — purely illustrative.
@@ -33,6 +34,8 @@ def offline_demo() -> None:
             f"  ts={c['ts']:>6}  O {c['open']:.2f}  H {c['high']:.2f}  "
             f"L {c['low']:.2f}  C {c['close']:.2f}"
         )
+    closes = [c["close"] for c in SAMPLE_1H]
+    print(f"EMA(3) closes : {[round(v, 4) for v in ema_values(closes, 3) if v is not None]}")
 
 
 def live_demo(chain: str, address: str) -> int:

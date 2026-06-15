@@ -3,6 +3,7 @@
 Routes:
   GET  /                          watchlist table (live price/liq from DexScreener)
   GET  /token/<chain>/<address>   multi-timeframe candlestick chart for one token
+  GET  /compare                   normalized watchlist mini-sparklines
   GET  /api/health                liveness + counts
   GET  /api/data                  the watchlist model as JSON
   POST /api/refresh-prices        refresh the live-price cache
@@ -12,7 +13,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
-from flask import Flask, abort, jsonify, render_template
+from flask import Flask, abort, jsonify, render_template, request
 
 from .chains import norm_chain
 from .chart import build_chart_bundle
@@ -20,8 +21,9 @@ from .config import Settings, load_settings
 from .dexscreener import DexScreenerClient
 from .formatting import register_filters
 from .gecko import GeckoClient
+from .models import CHART_TIMEFRAMES
 from .ratelimit import RateLimiter
-from .util import read_json, write_json
+from .util import read_json, to_float, write_json
 from .watchlist import build_items, load_watchlist
 
 
@@ -29,6 +31,40 @@ def _live_cache(settings: Settings) -> dict[str, dict]:
     cached = read_json(settings.live_cache_path, {})
     prices = cached.get("prices") if isinstance(cached, dict) else None
     return prices if isinstance(prices, dict) else {}
+
+
+def _period_list(raw: str | None, fallback: tuple[int, ...]) -> tuple[int, ...]:
+    if raw is None:
+        return fallback
+    out: list[int] = []
+    for chunk in raw.replace(";", ",").split(","):
+        try:
+            period = int(chunk.strip())
+        except ValueError:
+            continue
+        if 1 <= period <= 300 and period not in out:
+            out.append(period)
+    return tuple(out) or fallback
+
+
+def _period(raw: str | None, fallback: int) -> int:
+    try:
+        value = int(raw or "")
+    except ValueError:
+        return fallback
+    return value if 1 <= value <= 300 else fallback
+
+
+def _compare_points(candles: list[dict]) -> list[float | None]:
+    closes = [to_float(row.get("close")) for row in candles]
+    base = next((value for value in closes if value not in (None, 0.0)), None)
+    if base is None:
+        return []
+    return [None if value is None else ((value - base) / base) * 100.0 for value in closes]
+
+
+def _compare_labels(candles: list[dict]) -> list[str]:
+    return [str(i + 1) for i, _ in enumerate(candles)]
 
 
 def create_app(settings: Settings | None = None) -> Flask:
@@ -66,8 +102,44 @@ def create_app(settings: Settings | None = None) -> Flask:
         item["price"] = pool_info.get("price")
         if not item["pool"]:
             abort(404)
-        chart = build_chart_bundle(gecko, item)
+        chart = build_chart_bundle(
+            gecko,
+            item,
+            ema_periods=_period_list(request.args.get("ema"), (9, 21)),
+            rsi_period=_period(request.args.get("rsi"), 14),
+        )
         return render_template("token.html", item=item, chart=chart)
+
+    @app.route("/compare")
+    def compare():
+        timeframe = request.args.get("timeframe") or "1h"
+        if timeframe not in CHART_TIMEFRAMES:
+            timeframe = "1h"
+
+        watchlist = load_watchlist(settings.watchlist_path)
+        rows = []
+        for row in watchlist:
+            pool_info = dex.resolve_pool(row["chain"], row["address"])
+            pool = pool_info.get("pool") or ""
+            candles = gecko.fetch(row["chain"], pool, timeframe) if pool else []
+            rows.append(
+                {
+                    "label": row.get("label") or pool_info.get("symbol") or row["address"][:10],
+                    "chain": row["chain"],
+                    "address": row["address"],
+                    "url": pool_info.get("url") or "",
+                    "labels": _compare_labels(candles),
+                    "points": _compare_points(candles),
+                    "count": len(candles),
+                }
+            )
+
+        return render_template(
+            "compare.html",
+            rows=rows,
+            timeframe=timeframe,
+            timeframes=CHART_TIMEFRAMES,
+        )
 
     @app.get("/api/health")
     def api_health():

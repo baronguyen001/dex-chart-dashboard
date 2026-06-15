@@ -13,6 +13,8 @@ A tiny Flask dashboard that charts any token on Ethereum / BSC / Base / Solana w
 **DexScreener** — both **keyless**. It resamples the **30m and 2h** frames locally
 (GeckoTerminal serves neither), throttles + caches requests so a cold load never trips
 the free-tier rate limit, and draws your own entry / SL / TP lines on the chart.
+v0.2.0 adds optional EMA/RSI overlays, a watchlist compare view, and PNG chart snapshots
+for README or launch posts.
 
 </div>
 
@@ -38,6 +40,8 @@ dexscope serve            # open http://127.0.0.1:5066
 ```
 
 Click a token to open its multi-timeframe candlestick page. No build step, no keys, no DB.
+Use the chart checkboxes to enable EMA/RSI overlays, or open `/compare` to view normalized
+watchlist performance side-by-side.
 
 > Prefer to try it offline first? `python examples/quickstart.py` resamples a built-in 1h
 > sample into 2h with zero network calls.
@@ -51,6 +55,9 @@ Click a token to open its multi-timeframe candlestick page. No build step, no ke
 | 🐢 Free-tier safe | process-wide throttle + 429 backoff + 15-min on-disk cache |
 | 🔑 Keyless | GeckoTerminal + DexScreener public endpoints only |
 | 🎯 Your levels | per-token `entry` / `sl` / `tp1` / `tp2` drawn as lines |
+| Technical overlays | optional EMA + RSI lines computed locally from the same public OHLCV candles |
+| Compare view | `/compare` renders normalized percent-change mini-sparklines for the watchlist |
+| PNG snapshots | `dexscope snapshot` exports candlestick PNGs when installed with `[viz]` |
 | 🔌 Plain JSON watchlist | `{chain, address, label?, note?, entry?, sl?, tp1?, tp2?}` |
 | 🖥️ Self-hosted | single Flask app, `127.0.0.1` by default |
 
@@ -61,9 +68,19 @@ dexscope serve [--host --port --watchlist]   # run the dashboard
 dexscope warm [TF ...]                        # pre-fetch + cache OHLC for the whole watchlist
 dexscope resolve <chain> <address>            # print the best DexScreener pool for a token
 dexscope add <chain> <address> [--label --entry --sl --tp1 --tp2 --note]
+dexscope snapshot <chain> <address> [--timeframe 1h] [--out chart.png] [--ema 9] [--rsi 14]
 ```
 
 Chains: `eth`, `bsc`, `base`, `sol` (aliases like `ethereum`, `bnb`, `solana` work too).
+
+PNG export is optional:
+
+```bash
+pip install "dex-chart-dashboard[viz]"
+dexscope snapshot sol EKpQGSJtjMFqKZ9KQanSqYXRcF8fBopzLHYxdM65zcjm --ema 9 --rsi 14
+```
+
+Without the extra, the command exits with: `install dexscope[viz] to export PNG`.
 
 ## How it works
 
@@ -92,9 +109,12 @@ on disk (and are gitignored).
 
 **Does it tell me what to buy?** No. It charts price and draws levels *you* set. Signal
 scoring, paper-trading, and PnL simulation are deliberately out of scope.
+EMA/RSI overlays and normalized compare charts are read-only views over public price data,
+not financial advice.
 
 ## Related
 
+- **Build the full runnable bot with Trawlkit**: https://github.com/baronguyen001
 - 🧰 **[Trawlkit](https://github.com/baronguyen001)** — the full kit (scan → score → alert →
   paper-trade) this dashboard's charting engine was carved out of.
 - 🔍 [wallet-cluster-detector](https://github.com/baronguyen001/wallet-cluster-detector) — Solana early-buyer cluster radar.

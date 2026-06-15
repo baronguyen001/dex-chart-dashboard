@@ -19,6 +19,7 @@
     </div>
     <nav class="nav">
       <a href="{{ url_for('index') }}" class="{{ 'active' if request.path == '/' else '' }}">Watchlist</a>
+      <a href="{{ url_for('compare') }}" class="{{ 'active' if request.path == '/compare' else '' }}">Compare</a>
       <a href="https://github.com/baronguyen001/dex-chart-dashboard" target="_blank" rel="noreferrer">GitHub</a>
     </nav>
   </header>
