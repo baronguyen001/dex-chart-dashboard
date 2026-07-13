@@ -3,6 +3,13 @@
 All notable changes to this project are documented here. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/); versions follow SemVer.
 
+## [0.3.0] - 2026-07-13
+
+### Added
+- `dexscope alert` - one-shot read-only watchlist threshold check (entry/SL/TP distance), text/JSON, keyless.
+- `dexscope export` - OHLCV candle export to CSV/JSON per token for offline analysis.
+- `dexscope report` - terminal digest of the whole watchlist (price + latest EMA/RSI + distance-to-levels), text/JSON.
+
 ## [0.2.0] - 2026-06-15
 
 ### Added

@@ -13,8 +13,8 @@ A tiny Flask dashboard that charts any token on Ethereum / BSC / Base / Solana w
 **DexScreener** — both **keyless**. It resamples the **30m and 2h** frames locally
 (GeckoTerminal serves neither), throttles + caches requests so a cold load never trips
 the free-tier rate limit, and draws your own entry / SL / TP lines on the chart.
-v0.2.0 adds optional EMA/RSI overlays, a watchlist compare view, and PNG chart snapshots
-for README or launch posts.
+v0.3.0 adds one-shot watchlist threshold checks, OHLCV CSV/JSON export, and a terminal
+watchlist report with latest EMA/RSI context for offline review.
 
 </div>
 
@@ -58,6 +58,9 @@ watchlist performance side-by-side.
 | Technical overlays | optional EMA + RSI lines computed locally from the same public OHLCV candles |
 | Compare view | `/compare` renders normalized percent-change mini-sparklines for the watchlist |
 | PNG snapshots | `dexscope snapshot` exports candlestick PNGs when installed with `[viz]` |
+| Read-only alerts | `dexscope alert` checks your own entry / SL / TP levels once, with text or JSON output |
+| OHLCV export | `dexscope export` writes public candles to CSV or JSON for offline analysis |
+| Terminal report | `dexscope report` summarizes the watchlist with price, EMA/RSI, and level distance |
 | 🔌 Plain JSON watchlist | `{chain, address, label?, note?, entry?, sl?, tp1?, tp2?}` |
 | 🖥️ Self-hosted | single Flask app, `127.0.0.1` by default |
 
@@ -69,6 +72,9 @@ dexscope warm [TF ...]                        # pre-fetch + cache OHLC for the w
 dexscope resolve <chain> <address>            # print the best DexScreener pool for a token
 dexscope add <chain> <address> [--label --entry --sl --tp1 --tp2 --note]
 dexscope snapshot <chain> <address> [--timeframe 1h] [--out chart.png] [--ema 9] [--rsi 14]
+dexscope alert [--watchlist watchlist.json] [--format text|json] [--only-hit]
+dexscope export <chain> <address> [--timeframe 1h] [--format csv|json] [--out candles.csv]
+dexscope report [--watchlist watchlist.json] [--timeframe 1h] [--format text|json]
 ```
 
 Chains: `eth`, `bsc`, `base`, `sol` (aliases like `ethereum`, `bnb`, `solana` work too).
@@ -81,6 +87,14 @@ dexscope snapshot sol EKpQGSJtjMFqKZ9KQanSqYXRcF8fBopzLHYxdM65zcjm --ema 9 --rsi
 ```
 
 Without the extra, the command exits with: `install dexscope[viz] to export PNG`.
+
+One-shot read-only terminal workflows:
+
+```bash
+dexscope alert --only-hit
+dexscope export sol EKpQGSJtjMFqKZ9KQanSqYXRcF8fBopzLHYxdM65zcjm --format json --out wif.json
+dexscope report --timeframe 4h --format text
+```
 
 ## How it works
 
