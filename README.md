@@ -13,8 +13,8 @@ A tiny Flask dashboard that charts any token on Ethereum / BSC / Base / Solana w
 **DexScreener** — both **keyless**. It resamples the **30m and 2h** frames locally
 (GeckoTerminal serves neither), throttles + caches requests so a cold load never trips
 the free-tier rate limit, and draws your own entry / SL / TP lines on the chart.
-v0.3.0 adds one-shot watchlist threshold checks, OHLCV CSV/JSON export, and a terminal
-watchlist report with latest EMA/RSI context for offline review.
+v0.4.0 adds MACD and Bollinger Band overlays, an `--indicators` flag that folds those
+overlays into the CSV/JSON export, and an append-only JSONL history for level checks.
 
 </div>
 
@@ -55,11 +55,11 @@ watchlist performance side-by-side.
 | 🐢 Free-tier safe | process-wide throttle + 429 backoff + 15-min on-disk cache |
 | 🔑 Keyless | GeckoTerminal + DexScreener public endpoints only |
 | 🎯 Your levels | per-token `entry` / `sl` / `tp1` / `tp2` drawn as lines |
-| Technical overlays | optional EMA + RSI lines computed locally from the same public OHLCV candles |
+| Technical overlays | optional EMA, RSI, MACD + Bollinger Bands computed locally from the same public OHLCV candles |
 | Compare view | `/compare` renders normalized percent-change mini-sparklines for the watchlist |
 | PNG snapshots | `dexscope snapshot` exports candlestick PNGs when installed with `[viz]` |
-| Read-only alerts | `dexscope alert` checks your own entry / SL / TP levels once, with text or JSON output |
-| OHLCV export | `dexscope export` writes public candles to CSV or JSON for offline analysis |
+| Read-only alerts | `dexscope alert` checks your own entry / SL / TP levels once; `--jsonl-out` keeps a local history |
+| OHLCV export | `dexscope export` writes public candles to CSV or JSON, optionally with `--indicators` columns |
 | Terminal report | `dexscope report` summarizes the watchlist with price, EMA/RSI, and level distance |
 | 🔌 Plain JSON watchlist | `{chain, address, label?, note?, entry?, sl?, tp1?, tp2?}` |
 | 🖥️ Self-hosted | single Flask app, `127.0.0.1` by default |
@@ -72,8 +72,8 @@ dexscope warm [TF ...]                        # pre-fetch + cache OHLC for the w
 dexscope resolve <chain> <address>            # print the best DexScreener pool for a token
 dexscope add <chain> <address> [--label --entry --sl --tp1 --tp2 --note]
 dexscope snapshot <chain> <address> [--timeframe 1h] [--out chart.png] [--ema 9] [--rsi 14]
-dexscope alert [--watchlist watchlist.json] [--format text|json] [--only-hit]
-dexscope export <chain> <address> [--timeframe 1h] [--format csv|json] [--out candles.csv]
+dexscope alert [--watchlist watchlist.json] [--format text|json] [--only-hit] [--jsonl-out alerts.jsonl]
+dexscope export <chain> <address> [--timeframe 1h] [--format csv|json] [--out candles.csv] [--indicators]
 dexscope report [--watchlist watchlist.json] [--timeframe 1h] [--format text|json]
 ```
 
@@ -94,7 +94,14 @@ One-shot read-only terminal workflows:
 dexscope alert --only-hit
 dexscope export sol EKpQGSJtjMFqKZ9KQanSqYXRcF8fBopzLHYxdM65zcjm --format json --out wif.json
 dexscope report --timeframe 4h --format text
+dexscope alert --only-hit --jsonl-out alerts.jsonl
+dexscope export sol EKpQGSJtjMFqKZ9KQanSqYXRcF8fBopzLHYxdM65zcjm --indicators --out wif.csv
 ```
+
+`--indicators` appends `ema_9`, `ema_21`, `rsi_14`, `macd`, `macd_signal`, `macd_hist`,
+`bb_middle`, `bb_upper` and `bb_lower` after the OHLCV columns (use `--ema` / `--rsi` to pick
+other periods). `--jsonl-out` appends one compact JSON object per checked token, so repeated
+runs build a local history you can grep or replay offline.
 
 ## How it works
 

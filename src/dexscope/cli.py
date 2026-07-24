@@ -5,9 +5,11 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+import time
 from pathlib import Path
 
 from . import __version__
+from .alertlog import alert_rows_to_jsonl, append_jsonl
 from .alerts import build_alert_rows, render_alert_text
 from .chains import GECKO_CHAINS, norm_chain
 from .config import load_settings
@@ -61,6 +63,12 @@ def _build_parser() -> argparse.ArgumentParser:
     p_alert.add_argument("--watchlist", default=None)
     p_alert.add_argument("--format", choices=("text", "json"), default="text")
     p_alert.add_argument("--only-hit", action="store_true")
+    p_alert.add_argument(
+        "--jsonl-out",
+        default=None,
+        metavar="PATH",
+        help="append this check to a local JSONL history file",
+    )
 
     p_export = sub.add_parser("export", help="export OHLCV candles to CSV or JSON")
     p_export.add_argument("chain")
@@ -68,6 +76,13 @@ def _build_parser() -> argparse.ArgumentParser:
     p_export.add_argument("--timeframe", default="1h", choices=CHART_TIMEFRAMES)
     p_export.add_argument("--format", choices=("csv", "json"), default="csv")
     p_export.add_argument("--out", default=None)
+    p_export.add_argument(
+        "--indicators",
+        action="store_true",
+        help="append EMA/RSI/MACD/Bollinger columns computed from the same candles",
+    )
+    p_export.add_argument("--ema", type=int, action="append", default=[], metavar="PERIOD")
+    p_export.add_argument("--rsi", type=int, default=14, metavar="PERIOD")
 
     p_report = sub.add_parser("report", help="print a read-only watchlist digest")
     p_report.add_argument("--watchlist", default=None)
@@ -216,6 +231,11 @@ def _cmd_alert(args: argparse.Namespace) -> int:
         print(json.dumps(alert_rows, indent=2, ensure_ascii=False))
     else:
         print(render_alert_text(alert_rows))
+    if args.jsonl_out:
+        log_path = Path(args.jsonl_out)
+        payload = alert_rows_to_jsonl(alert_rows, checked_at=int(time.time()))
+        appended = append_jsonl(log_path, payload)
+        print(f"Appended {appended} row(s) to {log_path}")
     return 0
 
 
@@ -233,7 +253,20 @@ def _cmd_export(args: argparse.Namespace) -> int:
         print("No candles available for export", file=sys.stderr)
         return 1
 
-    payload = candles_to_json(candles) if args.format == "json" else candles_to_csv(candles)
+    overlays = None
+    if args.indicators:
+        overlays = build_indicators(
+            candles,
+            ema_periods=tuple(args.ema) or (9, 21),
+            rsi_period=args.rsi,
+            macd=(12, 26, 9),
+            bollinger=(20, 2.0),
+        )
+    payload = (
+        candles_to_json(candles, indicators=overlays)
+        if args.format == "json"
+        else candles_to_csv(candles, indicators=overlays)
+    )
     if args.out:
         out = Path(args.out)
         out.parent.mkdir(parents=True, exist_ok=True)

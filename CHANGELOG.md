@@ -3,6 +3,13 @@
 All notable changes to this project are documented here. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/); versions follow SemVer.
 
+## [0.4.0] - 2026-07-24
+
+### Added
+- MACD (`macd_values`) and Bollinger Bands (`bollinger_values`) as dependency-free overlays; both are opt-in arguments of `build_indicators` so existing payloads are unchanged.
+- `dexscope export --indicators` appends `ema_*`, `rsi_*`, `macd*` and `bb_*` columns to the CSV/JSON export, with `--ema`/`--rsi` to pick periods.
+- `dexscope alert --jsonl-out PATH` appends each check to a local append-only JSONL history (`alertlog`), so level hits can be reviewed offline later.
+
 ## [0.3.0] - 2026-07-13
 
 ### Added

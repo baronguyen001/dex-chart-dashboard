@@ -98,7 +98,7 @@ def _empty_frame(timeframe: str) -> dict:
         "close": [],
         "volume": [],
         "levels": {key: [] for key in LEVEL_KEYS},
-        "indicators": {"ema": {}, "rsi": {}},
+        "indicators": {"ema": {}, "rsi": {}, "macd": {}, "bollinger": {}},
     }
 
 
